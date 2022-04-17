@@ -33,7 +33,7 @@ def read_temp():
     # Get information from module
     lines = read_temp_raw()
 
-     #print(lines)
+    #print(lines)
     # Test again if crc error
     while lines[0].strip()[-3:] != 'YES':
         time.sleep(0.2)
@@ -47,14 +47,22 @@ def read_temp():
         return temp_c
 
 
-#create socket
-s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print('Connecting to server ' + host)
+#create socket, use IPv4 and TCP
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print('- Connecting to server ' + host)
 
+# Connect to server
 s.connect((host,port))
+
 while True:
-    
-    temp=(read_temp())
-    message=str(temp)
+    #git pull --rebase Read temperature from sensor
+    # This will happen every second
+    temp = (read_temp())
+    # Store the information and encode to bytes
+    message = str(temp)
     message = message.encode()
+    # Send the encoded message to server
     s.send(message)
+
+    time.sleep(1)
+
