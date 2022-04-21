@@ -28,8 +28,7 @@ def server():
     client, addr = s.accept()
     print(f'[CLIENT CONNECTED] {addr}')
     
-    thread_running = False
-    thread = threading.Thread(target=timer)
+    thread_timer = threading.Timer(5, timer_led_2)
     while True:
         """
         This loop will handle data that is sent from client
@@ -37,6 +36,9 @@ def server():
         """
         # Receive data from client with the temperature
         data = client.recv(1024)
+        temp = data.decode()
+        temp = temp[0:2]
+        client_timestamp = ''
         timestamp = datetime.datetime.now().time() # To compare timestamps on packets
         print(f'- TEMPERATURE: {data.decode()} | {timestamp}')
         
@@ -44,27 +46,24 @@ def server():
         if not data:
             break
         # Check if temp >= 23 and turn on led 1
-        elif float(data.decode()) >= 23:
+        elif float(temp) >= 22:
             led_1(state='on')
-            print('Temp 23 or more, turning on LED 1')
+            print('Temp 23 or more, LED 1 on')
             
             # Start 5 second timer in a thread if no thread is running
-            if not thread_running:
-                thread = threading.Thread(target=timer)
-                thread_running = True
-                thread.start()
+            if not thread_timer.is_alive():
+                thread_timer = threading.Timer(5, timer_led_2)
+                thread_timer.start()
         else:
             # Temp under 23, turn off leds
-            thread_running = False
-            #print(thread.is_alive())
             # If thread is_alive break the thread
-            ############ test without this one ################
-            if thread.is_alive():
+            if thread_timer.is_alive():
+                # If its alive cancel thread
+                thread_timer.cancel()
                 print('- Temp under 23, turning off LEDs')
-                thread.join()
-                thread_running = False
                 led_2(state='off')
-
+            
+            # Make sure LEDs is off
             led_2(state='off')                             
             led_1(state='off')
     
@@ -75,12 +74,11 @@ def server():
     s.close()
 
 
-def timer():
+def timer_led_2():
     """
-    Start a 5 second timer and if timer runs out start led 2
+    Starts if thread timer reaches five seconds and turns on LED 2
     """
-    time.sleep(5)
-    print('- 5 seconds over 23 degrees, turning on LED 2')
+    print('- 5 seconds over 23 degrees, LED 2 on')
     led_2(state='on')
 
 
