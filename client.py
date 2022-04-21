@@ -4,6 +4,7 @@ import time
 import os
 import glob
 import RPi.GPIO as GPIO
+from datetime import datetime
 
 host = '10.0.0.1'
 port = 12345
@@ -47,14 +48,28 @@ def read_temp():
         return temp_c
 
 
-#create socket
-s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print('Connecting to server ' + host)
+def start_socket():
+    #create socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-s.connect((host,port))
-while True:
-    
-    temp=(read_temp())
-    message=str(temp)
-    message = message.encode()
-    s.send(message)
+    print('- Connecting to server ' + host)    
+    s.connect((host,port))
+
+    while True:
+        # Timestamp message
+        timestamp = str(datetime.now().time())
+        # Read temperature from sensor
+        temp = str(read_temp())
+        message = (temp+' | '+timestamp)
+        print(message)
+        # Encode with utf-8 and send message to server
+        message = message.encode()
+        s.send(message)
+
+# Start script
+if __name__ == '__main__':
+    try:
+        start_socket()
+    except KeyboardInterrupt:
+        exit()
+
